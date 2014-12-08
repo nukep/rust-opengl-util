@@ -1,6 +1,5 @@
-use std;
 use gl;
-use gl::types::{GLint, GLuint, GLsizei};
+use gl::types::{GLint, GLuint};
 
 pub struct Texture2D {
     pub id: GLuint
