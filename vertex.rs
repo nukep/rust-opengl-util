@@ -148,7 +148,7 @@ impl IndexBuffer {
     }
 }
 
-#[deriving(Clone)]
+#[deriving(Copy)]
 pub struct Attrib {
     pub id: GLuint
 }

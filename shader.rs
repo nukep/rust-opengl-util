@@ -190,7 +190,7 @@ impl ProgramUniformContext {
 }
 
 /// Encapsulates an OpenGL program uniform.
-#[deriving(Clone)]
+#[deriving(Copy)]
 pub struct Uniform {
     pub id: GLint
 }
