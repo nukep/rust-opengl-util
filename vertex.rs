@@ -81,18 +81,18 @@ impl<'a> VertexArrayContext<'a> {
     pub fn draw_arrays(&self, mode: GLuint, first: GLint, count: GLsizei) {
         unsafe { gl::DrawArrays(mode, first, count) };
     }
-    pub fn draw_elements(&self, mode: GLuint, count: GLsizei, offset: uint) {
+    pub fn draw_elements(&self, mode: GLuint, count: GLsizei, offset: usize) {
         let data_type = self.va.ibo_ref.as_ref().expect("No IBO is bound to the VAO").data_type;
-        unsafe { gl::DrawElements(mode, count, data_type, std::ptr::null().offset(offset as int)) };
+        unsafe { gl::DrawElements(mode, count, data_type, std::ptr::null().offset(offset as isize)) };
     }
 }
 
 pub struct VertexArrayBufferContext;
 impl VertexArrayBufferContext {
-    pub fn attr_pointer(&self, a: Attrib, data_size: GLint, data_type: GLuint, stride: GLsizei, offset: uint) {
+    pub fn attr_pointer(&self, a: Attrib, data_size: GLint, data_type: GLuint, stride: GLsizei, offset: usize) {
         unsafe {
             gl::EnableVertexAttribArray(a.id);
-            gl::VertexAttribPointer(a.id, data_size, data_type, gl::FALSE, stride, std::ptr::null().offset(offset as int));
+            gl::VertexAttribPointer(a.id, data_size, data_type, gl::FALSE, stride, std::ptr::null().offset(offset as isize));
         };
     }
 }
