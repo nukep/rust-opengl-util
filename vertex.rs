@@ -20,7 +20,9 @@ impl Drop for VertexArrayVAO {
     }
 }
 impl VertexArray {
-    pub fn new(cb: |&mut VertexArrayInitContext|) -> VertexArray {
+    pub fn new<F>(cb: F) -> VertexArray where
+        F: FnOnce(&mut VertexArrayInitContext)
+    {
         let mut vao = 0;
         unsafe {
             gl::GenVertexArrays(1, &mut vao);
@@ -40,7 +42,9 @@ impl VertexArray {
 
         va
     }
-    pub fn bind_vao(&self, cb: |&VertexArrayContext|) {
+    pub fn bind_vao<F>(&self, cb: F) where
+        F: FnOnce(&VertexArrayContext)
+    {
         unsafe { gl::BindVertexArray(self.vao.id) };
         let ctx = VertexArrayContext { va: self };
         cb(&ctx);
@@ -57,7 +61,9 @@ pub struct VertexArrayInitContext<'a> {
     va: &'a mut VertexArray
 }
 impl<'a> VertexArrayInitContext<'a> {
-    pub fn bind_vbo(&mut self, vbo: Rc<VertexBuffer>, cb: |VertexArrayBufferContext|) {
+    pub fn bind_vbo<F>(&mut self, vbo: Rc<VertexBuffer>, cb: F) where
+        F: FnOnce(VertexArrayBufferContext)
+    {
         unsafe { gl::BindBuffer(gl::ARRAY_BUFFER, vbo.id) };
         self.va.add_vbo(vbo);
         cb(VertexArrayBufferContext);
@@ -148,7 +154,7 @@ impl IndexBuffer {
     }
 }
 
-#[deriving(Copy)]
+#[derive(Copy)]
 pub struct Attrib {
     pub id: GLuint
 }

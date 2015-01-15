@@ -3,7 +3,7 @@ use super::vertex::{Attrib, VertexArray, VertexBuffer, IndexBuffer};
 
 pub fn gen_cube(length: f32, offset: f32, a_position: Attrib) -> VertexArray {
     // 8 corners in a cube
-    let corner: [(f32,f32,f32), ..8] = {
+    let corner: [(f32,f32,f32); 8] = {
         let l = offset;
         let m = length + offset;
 
@@ -22,7 +22,7 @@ pub fn gen_cube(length: f32, offset: f32, a_position: Attrib) -> VertexArray {
     // Which corners to copy to the vertex buffer for each face.
     // In order to maintain distinct normals for each face,
     // corners cannot be shared among different faces.
-    static VERT_IDX: [uint, ..4*6] = [
+    static VERT_IDX: [uint; 4*6] = [
         0,1,2,3,
         4,0,6,2,
         5,4,7,6,
@@ -32,7 +32,7 @@ pub fn gen_cube(length: f32, offset: f32, a_position: Attrib) -> VertexArray {
     ];
 
     // Which vertices to form triangle faces from
-    static IDX: [u8, ..6*6] = [
+    static IDX: [u8; 6*6] = [
         0,1,2, 1,3,2,
         4,5,6, 5,7,6,
         8,9,10, 9,11,10,
@@ -61,7 +61,7 @@ pub fn gen_cube(length: f32, offset: f32, a_position: Attrib) -> VertexArray {
 pub fn gen_tileset(tiles_width: u32, tiles_height: u32, a_position: Attrib, a_texture_uv: Attrib) -> VertexArray {
     let num_tiles = tiles_width * tiles_height;
     let buffer: Vec<f32> = range(0, num_tiles).flat_map(|_| {
-        static POS: [f32, ..12] = [0.0,0.0, 1.0,0.0, 0.0,1.0, 1.0,0.0, 1.0,1.0, 0.0,1.0];
+        static POS: [f32; 12] = [0.0,0.0, 1.0,0.0, 0.0,1.0, 1.0,0.0, 1.0,1.0, 0.0,1.0];
         POS.iter().map(|o| *o)
     }).chain(range(0, num_tiles).flat_map(|i| {
         let (x, y) = (i % tiles_width, i / tiles_width);

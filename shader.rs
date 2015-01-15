@@ -1,4 +1,5 @@
 use std;
+use std::ffi::CString;
 use gl;
 use gl::types::{GLint, GLuint};
 use super::vertex::Attrib;
@@ -30,21 +31,19 @@ impl Shader {
         let shader = Shader {
             id: unsafe { gl::CreateShader(shader_type) }
         };
-        source.with_c_str(|c_str| {
-            unsafe { gl::ShaderSource(shader.id, 1, &c_str, std::ptr::null()); }
-        });
-
-        let successful: bool;
-
         unsafe {
+            let c_source = CString::from_slice(source.as_bytes());
+            let ptr = c_source.as_slice_with_nul().as_ptr();
+            gl::ShaderSource(shader.id, 1, &ptr, std::ptr::null());
+        }
+
+        let successful = unsafe {
             gl::CompileShader(shader.id);
 
-            successful = {
-                let mut result: GLint = 0;
-                gl::GetShaderiv(shader.id, gl::COMPILE_STATUS, &mut result);
-                result != 0
-            };
-        }
+            let mut result: GLint = 0;
+            gl::GetShaderiv(shader.id, gl::COMPILE_STATUS, &mut result);
+            result != 0
+        };
 
         if successful {
             Ok(shader)
@@ -58,9 +57,12 @@ impl Shader {
         unsafe { gl::GetShaderiv(self.id, gl::INFO_LOG_LENGTH, &mut len) };
         assert!(len > 0);
 
-        let mut buf = Vec::from_elem(len as uint, 0u8);
-        let buf_ptr = buf.as_mut_ptr() as *mut gl::types::GLchar;
-        unsafe { gl::GetShaderInfoLog(self.id, len, std::ptr::null_mut(), buf_ptr) };
+        let mut buf = Vec::with_capacity(len as usize);
+        let buf_ptr = buf.as_mut_slice().as_mut_ptr() as *mut gl::types::GLchar;
+        unsafe {
+            gl::GetShaderInfoLog(self.id, len, std::ptr::null_mut(), buf_ptr);
+            buf.set_len(len as usize);
+        };
 
         match String::from_utf8(buf) {
             Ok(log) => log,
@@ -114,13 +116,17 @@ impl Program {
 
     /// Calls `glUseProgram()` and then calls the `cb` closure, which is
     /// sent a context for assigning program uniforms.
-    pub fn use_program(&self, cb: |ProgramUniformContext|) {
+    pub fn use_program<F>(&self, cb: F) where
+        F: FnOnce(ProgramUniformContext)
+    {
         unsafe { gl::UseProgram(self.id) };
         cb(ProgramUniformContext);
     }
 
     pub fn get_attrib(&self, name: &str) -> Attrib {
-        match name.with_c_str(|ptr| unsafe { gl::GetAttribLocation(self.id, ptr) }) {
+        let c_name = CString::from_slice(name.as_bytes());
+        let ptr = c_name.as_ptr();
+        match unsafe { gl::GetAttribLocation(self.id, ptr) } {
             -1 => panic!("Could not find attribute \"{}\" in shader program \"{}\"", name, self.name),
             attr => Attrib { id: attr as GLuint }
         }
@@ -134,7 +140,9 @@ impl Program {
     }
 
     pub fn get_uniform_option(&self, name: &str) -> Option<Uniform> {
-        match name.with_c_str(|c_str| unsafe { gl::GetUniformLocation(self.id, c_str) }) {
+        let c_name = CString::from_slice(name.as_bytes());
+        let ptr = c_name.as_ptr();
+        match unsafe { gl::GetUniformLocation(self.id, ptr) } {
             -1 => None,
             id => Some(Uniform { id: id })
         }
@@ -145,9 +153,12 @@ impl Program {
         unsafe { gl::GetProgramiv(self.id, gl::INFO_LOG_LENGTH, &mut len) };
         assert!(len > 0);
 
-        let mut buf = Vec::from_elem(len as uint, 0u8);
-        let buf_ptr = buf.as_mut_ptr() as *mut gl::types::GLchar;
-        unsafe { gl::GetProgramInfoLog(self.id, len, std::ptr::null_mut(), buf_ptr) };
+        let mut buf = Vec::with_capacity(len as usize);
+        let buf_ptr = buf.as_mut_slice().as_mut_ptr() as *mut gl::types::GLchar;
+        unsafe {
+            gl::GetProgramInfoLog(self.id, len, std::ptr::null_mut(), buf_ptr);
+            buf.set_len(len as usize);
+        };
 
         match String::from_utf8(buf) {
             Ok(log) => log,
@@ -181,7 +192,7 @@ impl ProgramUniformContext {
     }
 
     /// Corresponds to `glUniformMatrix4fv()`
-    pub fn set_mat4(&self, u: Uniform, mat: &[[f32, ..4], ..4]) {
+    pub fn set_mat4(&self, u: Uniform, mat: &[[f32; 4]; 4]) {
         unsafe {
             let ptr: *const f32 = std::mem::transmute(mat);
             gl::UniformMatrix4fv(u.id, 1, gl::FALSE, ptr);
@@ -190,7 +201,7 @@ impl ProgramUniformContext {
 }
 
 /// Encapsulates an OpenGL program uniform.
-#[deriving(Copy)]
+#[derive(Copy)]
 pub struct Uniform {
     pub id: GLint
 }
