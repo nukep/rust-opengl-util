@@ -32,9 +32,10 @@ impl Shader {
             id: unsafe { gl::CreateShader(shader_type) }
         };
         unsafe {
-            let c_source = CString::from_slice(source.as_bytes());
-            let ptr = c_source.as_slice_with_nul().as_ptr();
-            gl::ShaderSource(shader.id, 1, &ptr, std::ptr::null());
+            let ptr: *const u8 = source.as_bytes().as_ptr();
+            let ptr_i8: *const i8 = std::mem::transmute(ptr);
+            let len = source.len() as GLint;
+            gl::ShaderSource(shader.id, 1, &ptr_i8, &len);
         }
 
         let successful = unsafe {
