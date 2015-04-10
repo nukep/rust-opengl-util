@@ -41,15 +41,15 @@ pub fn gen_cube(length: f32, offset: f32, a_position: Attrib) -> VertexArray {
         20,21,22, 21,23,22
     ];
 
-    let mut buffer: Vec<f32> = Vec::new();
-    for &i in VERT_IDX.iter() {
+    let mut buffer: Vec<f32>;
+    buffer = VERT_IDX.iter().flat_map(|&i| {
         let (x,y,z) = corner[i];
-        buffer.push_all(&[x,y,z]);
-    }
+        vec![x, y, z].into_iter()
+    }).collect();
 
     VertexArray::new(|vao_ctx| {
-        let ibo = IndexBuffer::rc_from_slice::<u8>(&IDX[], gl::UNSIGNED_BYTE);
-        let vbo = VertexBuffer::rc_from_slice::<f32>(&buffer[]);
+        let ibo = IndexBuffer::rc_from_slice::<u8>(&IDX, gl::UNSIGNED_BYTE);
+        let vbo = VertexBuffer::rc_from_slice::<f32>(&buffer);
 
         vao_ctx.bind_ibo(ibo);
         vao_ctx.bind_vbo(vbo, |vbo_ctx| {
@@ -73,7 +73,7 @@ pub fn gen_tileset(tiles_width: u32, tiles_height: u32, a_position: Attrib, a_te
     })).collect();
 
     VertexArray::new(|vao_ctx| {
-        let vbo = VertexBuffer::rc_from_slice::<f32>(&buffer[]);
+        let vbo = VertexBuffer::rc_from_slice::<f32>(&buffer);
         vao_ctx.bind_vbo(vbo, |vbo_ctx| {
             vbo_ctx.attr_pointer(a_position, 2, gl::FLOAT, 0, 0);
             vbo_ctx.attr_pointer(a_texture_uv, 2, gl::FLOAT, 0, num_tiles as usize*4*2*6);

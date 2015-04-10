@@ -59,7 +59,7 @@ impl Shader {
         assert!(len > 0);
 
         let mut buf = Vec::with_capacity(len as usize);
-        let buf_ptr = buf.as_mut_slice().as_mut_ptr() as *mut gl::types::GLchar;
+        let buf_ptr = buf.as_mut_ptr() as *mut gl::types::GLchar;
         unsafe {
             gl::GetShaderInfoLog(self.id, len, std::ptr::null_mut(), buf_ptr);
             buf.set_len(len as usize);
@@ -125,7 +125,7 @@ impl Program {
     }
 
     pub fn get_attrib(&self, name: &str) -> Attrib {
-        let c_name = CString::from_slice(name.as_bytes());
+        let c_name = CString::new(name).unwrap();
         let ptr = c_name.as_ptr();
         match unsafe { gl::GetAttribLocation(self.id, ptr) } {
             -1 => panic!("Could not find attribute \"{}\" in shader program \"{}\"", name, self.name),
@@ -141,7 +141,7 @@ impl Program {
     }
 
     pub fn get_uniform_option(&self, name: &str) -> Option<Uniform> {
-        let c_name = CString::from_slice(name.as_bytes());
+        let c_name = CString::new(name).unwrap();
         let ptr = c_name.as_ptr();
         match unsafe { gl::GetUniformLocation(self.id, ptr) } {
             -1 => None,
@@ -155,7 +155,7 @@ impl Program {
         assert!(len > 0);
 
         let mut buf = Vec::with_capacity(len as usize);
-        let buf_ptr = buf.as_mut_slice().as_mut_ptr() as *mut gl::types::GLchar;
+        let buf_ptr = buf.as_mut_ptr() as *mut gl::types::GLchar;
         unsafe {
             gl::GetProgramInfoLog(self.id, len, std::ptr::null_mut(), buf_ptr);
             buf.set_len(len as usize);
@@ -202,7 +202,7 @@ impl ProgramUniformContext {
 }
 
 /// Encapsulates an OpenGL program uniform.
-#[derive(Copy)]
+#[derive(Copy, Clone)]
 pub struct Uniform {
     pub id: GLint
 }
